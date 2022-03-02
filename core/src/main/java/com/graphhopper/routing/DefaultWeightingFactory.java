@@ -82,6 +82,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
             weighting = CustomModelParser.createWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder, turnCostProvider);
+        }  else if ("cleanest".equalsIgnoreCase(weightingStr)) {
+            weighting = new CleanestWeighting(encoder, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
             if (encoder.supports(PriorityWeighting.class))
                 weighting = new PriorityWeighting(encoder, hints, turnCostProvider);

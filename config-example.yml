@@ -51,6 +51,18 @@ graphhopper:
       vehicle: car
       weighting: fastest
 
+    - name: bike_fastest
+      vehicle: bike
+      weighting: fastest
+
+    - name: bike_cleanest
+      vehicle: bike
+      weighting: cleanest
+
+      #   - name: bike_cleanest
+      #     vehicle: bike
+    #     weighting: cleanest
+
   #  - name: car_with_turn_costs
   #    vehicle: car
   #    weighting: short_fastest
@@ -64,8 +76,8 @@ graphhopper:
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
   # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
   # usage) and the routing will also be slower than with `turn_costs: false`.
-  profiles_ch:
-    - profile: car
+    #profiles_ch:
+  #  - profile: car
   #   - profile: car_with_turn_costs
 
   # Hybrid mode:
@@ -77,7 +89,7 @@ graphhopper:
   # profile for which an LM profile exists. Important: This only will give correct routing results if the weights
   # calculated for the profile are equal or larger (for every edge) than those calculated for the profile that was used
   # for the preparation (`my_other_profile`)
-  profiles_lm: []
+  # profiles_lm: []
 
   ##### Elevation #####
 
