@@ -6,6 +6,8 @@ WORKDIR /graphhopper
 
 COPY . .
 
+RUN chmod a+rx ./graphhopper.sh
+
 RUN ./graphhopper.sh build
 
 FROM openjdk:11.0-jre
