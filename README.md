@@ -30,6 +30,18 @@ Shorten command line : JAR manifest
 
 Rebuild project, run, and play !
 
+### Launch with docker
+
+```
+docker build . -t graphhopper
+docker run -d --name graphhopper -v C:/D/Volumes/Graphhopper:/data -p 8989:8989 graphhopper
+```
+
+Just in case, launch cmd : 
+```
+./graphhopper.sh web ./pays-de-la-loire-latest.osm.pbf
+```
+
 # Community
 
 We have an open community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/). Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).

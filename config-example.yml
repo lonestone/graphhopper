@@ -47,10 +47,6 @@ graphhopper:
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
   profiles:
-    - name: car
-      vehicle: car
-      weighting: fastest
-
     - name: bike_fastest
       vehicle: bike
       weighting: fastest

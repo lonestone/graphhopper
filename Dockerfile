@@ -6,6 +6,8 @@ WORKDIR /graphhopper
 
 COPY . .
 
+RUN curl http://download.geofabrik.de/europe/france/pays-de-la-loire-latest.osm.pbf -o ./pays-de-la-loire-latest.osm.pbf
+
 RUN chmod a+rx ./graphhopper.sh
 
 RUN ./graphhopper.sh build
@@ -20,7 +22,7 @@ WORKDIR /graphhopper
 
 COPY --from=build /graphhopper/web/target/*.jar ./web/target/
 # pom.xml is used to get the jar file version. see https://github.com/graphhopper/graphhopper/pull/1990#discussion_r409438806
-COPY ./graphhopper.sh ./pom.xml ./config-example.yml ./
+COPY ./graphhopper.sh ./pom.xml ./config-example.yml ./pays-de-la-loire-latest.osm.pbf ./
 
 VOLUME [ "/data" ]
 
@@ -28,4 +30,4 @@ EXPOSE 8989
 
 ENTRYPOINT [ "./graphhopper.sh", "web" ]
 
-CMD [ "/data/pays-de-la-loire-latest.osm.pbf" ]
+CMD [ "./pays-de-la-loire-latest.osm.pbf" ]
