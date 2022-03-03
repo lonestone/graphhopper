@@ -6,7 +6,6 @@ WORKDIR /graphhopper
 
 COPY . .
 
-RUN curl http://download.geofabrik.de/europe/france/pays-de-la-loire-latest.osm.pbf -o ./pays-de-la-loire-latest.osm.pbf
 
 RUN chmod a+rx ./graphhopper.sh
 
@@ -19,6 +18,8 @@ ENV JAVA_OPTS "-Xmx1g -Xms1g -Ddw.server.application_connectors[0].bind_host=0.0
 RUN mkdir -p /data
 
 WORKDIR /graphhopper
+
+RUN curl http://download.geofabrik.de/europe/france/pays-de-la-loire-latest.osm.pbf -o pays-de-la-loire-latest.osm.pbf
 
 COPY --from=build /graphhopper/web/target/*.jar ./web/target/
 # pom.xml is used to get the jar file version. see https://github.com/graphhopper/graphhopper/pull/1990#discussion_r409438806
