@@ -39,6 +39,11 @@ docker run -d --name graphhopper -v C:/D/Volumes/Graphhopper:/data -p 8989:8989 
 
 Just in case, launch cmd : 
 ```
+# automatically download osm data
+./graphhopper.sh web pays-de-la-loire.pbf
+
+
+# OR load local file
 ./graphhopper.sh web ./pays-de-la-loire-latest.osm.pbf
 ```
 

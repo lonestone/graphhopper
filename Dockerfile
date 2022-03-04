@@ -29,4 +29,4 @@ EXPOSE 8989
 
 ENTRYPOINT [ "./graphhopper.sh", "web" ]
 
-CMD [ "/data/pays-de-la-loire-latest.osm.pbf" ]
+CMD [ "pays-de-la-loire.pbf" ]
