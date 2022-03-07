@@ -7,7 +7,7 @@ WORKDIR /graphhopper
 COPY . .
 
 
-RUN chmod a+rx ./graphhopper.sh
+RUN chmod 777 ./graphhopper.sh
 
 RUN ./graphhopper.sh build
 
@@ -23,10 +23,12 @@ COPY --from=build /graphhopper/web/target/*.jar ./web/target/
 # pom.xml is used to get the jar file version. see https://github.com/graphhopper/graphhopper/pull/1990#discussion_r409438806
 COPY ./graphhopper.sh ./pom.xml ./config-example.yml ./
 
+RUN chmod 777 ./graphhopper.sh
+
 VOLUME [ "/data" ]
 
 EXPOSE 8989
 
-ENTRYPOINT [ "./graphhopper.sh", "web" ]
+ENTRYPOINT [ "/graphhopper/graphhopper.sh", "web" ]
 
 CMD [ "pays-de-la-loire.pbf" ]
