@@ -14,8 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 public class ReadGeotiff {
 
-    private final static String url = "C:\\D\\Sources\\tutorial\\src\\main\\java\\org\\geotools\\tutorial\\quickstart\\aireal_90_4326.tif";
-
     public static double getValue(double x, double y, GridCoverage2D grid, Raster gridData) throws Exception {
         try {
             GridGeometry2D gg = grid.getGridGeometry();

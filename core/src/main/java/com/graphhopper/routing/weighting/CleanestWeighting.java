@@ -13,12 +13,17 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Hints;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
+import java.nio.Buffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Date;
 
 /**
  * Calculates the cleanest route - independent of a vehicle as the calculation is based on the
@@ -30,16 +35,17 @@ import java.io.IOException;
  * @author Lonestone
  */
 
-// TODO : Extends FastestWeighting plutôt ?
-public class CleanestWeighting extends AbstractWeighting {
+public class CleanestWeighting extends FastestWeighting {
     private FastestWeighting fw;
-    private final static String url = "C:\\D\\Sources\\tutorial\\src\\main\\java\\org\\geotools\\tutorial\\quickstart\\aireal_90_4326.tif";
-    private  File tiffFile = new File(url);
-    private  GeoTiffReader reader;
-    private  GridCoverage2D grid;
-    private  Raster gridData;
-    private Double min ;
-    private Double max ;
+
+    private final static Logger logger = LoggerFactory.getLogger(CleanestWeighting.class);
+    private static GeoTiffReader reader;
+    private static GridCoverage2D grid;
+    private static Raster gridData;
+    private Double min;
+    private Double max;
+    private static boolean updateInProgress = false;
+    private static Date lastGeotiffMaj = new Date(0);
 
     public CleanestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         super(encoder, turnCostProvider);
@@ -48,20 +54,25 @@ public class CleanestWeighting extends AbstractWeighting {
         min = Double.valueOf(10000);
         max = Double.valueOf(-1);
 
-        // look existing
-        String EPSG4326 = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
         try {
-            CoordinateReferenceSystem crs2 = CRS.parseWKT(EPSG4326);
-            reader =   new GeoTiffReader(new FileInputStream(( tiffFile)), new Hints(Hints.CRS, crs2));
-
-            grid =reader.read(null);
-            gridData = grid.getRenderedImage().getData();
-
+            // look existing
+            if (reader == null && !updateInProgress) {
+                logger.info("Initial .geotiff loading");
+                updateGeotiff();
+            }
+            synchronized (reader) {
+                long diff = new Date().getTime() - lastGeotiffMaj.getTime();
+                if (diff > 5000 && !updateInProgress) {
+                    lastGeotiffMaj = new Date();
+                    updateGeotiff();
+                }
+            }
         } catch (DataSourceException e) {
-            // e.printStackTrace();
+            e.printStackTrace();
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (FactoryException e) {
-            //   e.printStackTrace();
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,31 +85,61 @@ public class CleanestWeighting extends AbstractWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        double s = fw.calcEdgeWeight(edgeState, reverse);
-        if (s < min) min = s;
-        if (s > max) max = s;
+        double fastestWeight = fw.calcEdgeWeight(edgeState, reverse);
+        if (fastestWeight < min) min = fastestWeight;
+        if (fastestWeight > max) max = fastestWeight;
 
         PointList ptList = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
 
-        // TODO : médiane de plusieurs points
+        // TODO : médiane de plusieurs points ?
         GHPoint3D pt = ptList.get(0);
         try {
-            double x = ReadGeotiff.getValue(pt.lon, pt.lat, grid, gridData);
-            double coef = 1;
-            if (x < 10) coef = 1.1;
-            else if (x < 30) coef = 2;
-            else if (x < 60) coef = 5;
-            else if (x <= 90) coef = 10;
-            double finalWeight =  s * (coef);
-            return finalWeight;
+            double airQA = ReadGeotiff.getValue(pt.lon, pt.lat, grid, gridData);
+            // TODO : delete that
+            if (airQA > 0) {
+                System.out.println((airQA));
+            }
+            return fastestWeight * calcCoef(airQA);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
-            return 0;
+            logger.error(e.getMessage());
+            // if an error occurred, we return the weight from fastest way
+            return fastestWeight;
         }
     }
 
     @Override
     public String getName() {
         return "cleanest";
+    }
+
+    private double calcCoef(double airQA) {
+        double coef = 1;
+        if (airQA < 10) coef = 1.1;
+        else if (airQA < 30) coef = 2;
+        else if (airQA < 60) coef = 5;
+        else if (airQA <= 90) coef = 10;
+
+        return coef;
+    }
+
+    private static void updateGeotiff() throws IOException, FactoryException {
+        updateInProgress = true;
+        logger.info("Updating geotiff");
+
+        // get geotiff stream
+        URL url = new URL("https://data.airpl.org/media/aireel/aireel_indic_7m_202201311500_atmo.tif");
+        InputStream in = url.openStream();
+
+        // convert to reader and load to RAM
+        String EPSG4326 = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
+        CoordinateReferenceSystem crs2 = CRS.parseWKT(EPSG4326);
+        reader = new GeoTiffReader(in, new Hints(Hints.CRS, crs2));
+        grid = reader.read(null);
+        gridData = grid.getRenderedImage().getData();
+        in.close();
+
+        logger.info("Update geotiff OK");
+        lastGeotiffMaj = new Date();
+        updateInProgress = false;
     }
 }
