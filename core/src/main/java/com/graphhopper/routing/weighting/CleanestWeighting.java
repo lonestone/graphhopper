@@ -6,6 +6,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
+import com.sun.media.imageioimpl.common.PackageUtil;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.data.DataSourceException;
 import org.geotools.gce.geotiff.GeoTiffReader;
@@ -18,11 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.URL;
-import java.nio.Buffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Date;
 
 /**
@@ -49,6 +47,14 @@ public class CleanestWeighting extends FastestWeighting {
 
     public CleanestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         super(encoder, turnCostProvider);
+
+        try {
+            setVendorName(PackageUtil.class, "lonestone", "lonestone", "lonestone");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
 
         fw = new FastestWeighting(encoder, turnCostProvider);
         min = Double.valueOf(10000);
@@ -141,5 +147,22 @@ public class CleanestWeighting extends FastestWeighting {
         logger.info("Update geotiff OK");
         lastGeotiffMaj = new Date();
         updateInProgress = false;
+    }
+
+    // set vendorname, else Geotiff library could not be get .geotiff from web
+    // see https://stackoverflow.com/questions/7051603/jai-vendorname-null/18495658#18495658
+    public static void setVendorName(Class<?> PackageUtil, String vendor, String version, String specTitle)
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        Field vendorField = PackageUtil.getDeclaredField("vendor");
+        vendorField.setAccessible(true);
+        vendorField.set(null, vendor);
+
+        Field versionField = PackageUtil.getDeclaredField("version");
+        versionField.setAccessible(true);
+        versionField.set(null, version);
+
+        Field specTitleField = PackageUtil.getDeclaredField("specTitle");
+        specTitleField.setAccessible(true);
+        specTitleField.set(null, specTitle);
     }
 }
