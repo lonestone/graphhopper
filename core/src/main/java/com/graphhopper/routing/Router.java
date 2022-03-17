@@ -50,6 +50,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
+import java.util.function.BinaryOperator;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
@@ -274,7 +275,7 @@ public class Router {
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
         double QAsum = 0;
-        double[] QAs = new double[responsePath.getPoints().size()];
+        List<Double> QAs = new ArrayList<Double>();
         for (int i = 0; i < responsePath.getPoints().size(); i++ )
         {
             double lat = responsePath.getPoints().get(i).getLat();
@@ -282,15 +283,17 @@ public class Router {
             double qa = 0;
             try {
                 qa = ReadGeotiff.getValue( lon, lat);
-                QAs[i] = qa;
+                QAs.add((double) Math.round(qa / 15));
                 QAsum += qa;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        ghRsp.getHints().putObject("QA_cumulated", QAsum );
-        ghRsp.getHints().putObject("QA", QAsum /= responsePath.getPoints().size() );
+        // return most frequent value
+        ghRsp.getHints().putObject("qa", QAs.stream().reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(QAs, o1) -
+                Collections.frequency(QAs, o2))).orElse(null));
+        ghRsp.getHints().putObject("qa_cumulated", Math.round(QAsum) );
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;

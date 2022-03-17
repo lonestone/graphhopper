@@ -34,7 +34,7 @@ public class ReadGeotiff {
         if (!timerOn)
         {
             timerOn = true;
-            System.out.println("Start new timer");
+            System.out.println("Start new geotiff timer");
             long x = new Date().getTime();
             new Timer().scheduleAtFixedRate(new TimerTask(){
                 @Override
