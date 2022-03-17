@@ -34,6 +34,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.routing.weighting.custom.ReadGeotiff;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -272,6 +273,24 @@ public class Router {
         ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
+        double QAsum = 0;
+        double[] QAs = new double[responsePath.getPoints().size()];
+        for (int i = 0; i < responsePath.getPoints().size(); i++ )
+        {
+            double lat = responsePath.getPoints().get(i).getLat();
+            double lon = responsePath.getPoints().get(i).getLon();
+            double qa = 0;
+            try {
+                qa = ReadGeotiff.getValue( lon, lat);
+                QAs[i] = qa;
+                QAsum += qa;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        ghRsp.getHints().putObject("QA_cumulated", QAsum );
+        ghRsp.getHints().putObject("QA", QAsum /= responsePath.getPoints().size() );
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;
