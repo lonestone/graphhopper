@@ -12,7 +12,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>5.0-SNAPSHOT</version>
+        <version>client_hc_no_vehicle</version>
     </parent>  
 
     <dependencies>
