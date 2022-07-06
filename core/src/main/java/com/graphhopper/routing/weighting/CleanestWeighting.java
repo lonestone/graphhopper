@@ -19,13 +19,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author J.Brun - Lonestone
  */
-public class CleanestWeighting extends FastestWeighting {
+public class CleanestWeighting extends PriorityWeighting {
     private PriorityWeighting pw;
 
     private final static Logger logger = LoggerFactory.getLogger(CleanestWeighting.class);
 
     public CleanestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        super(encoder, turnCostProvider);
+        super(encoder, map, turnCostProvider);
 
         ReadGeotiff.startTimer();
         pw = new PriorityWeighting(encoder, map, turnCostProvider);
@@ -48,7 +48,7 @@ public class CleanestWeighting extends FastestWeighting {
             return priorityWeight * calcCoef(airQA);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            // if an error occurred, we return the weight from fastest way
+            // if an error occurred, we return the weight from priorityWeight
             return priorityWeight;
         }
     }

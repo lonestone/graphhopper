@@ -69,7 +69,7 @@ public class ReadGeotiff {
             double[] pixel = new double[1];
             double[] data = gridData.getPixel(posGrid.x, posGrid.y, pixel);
 
-            // 0.54 is determinated by test between this geotiff reader and with geoserver requests
+            // 0.54 is determined by test between this geotiff reader and with geoserver requests
             return data[0] > 0 ? data[0] * 0.54  : 0;
         }catch (Exception e)
         {
@@ -83,7 +83,7 @@ public class ReadGeotiff {
 
         // get geotiff stream
         // todo: go to env
-        URL url = new URL("https://api.naonair.org/geoserver/aireel/wms?service=WMS&version=1.1.0&request=GetMap&layers=aireel%3Aaireel_indic_7m_atmo_deg&bbox=-1.9272281569407010,47.0913666061233300,-1.3443056421867574,47.3612095285679118&srs=EPSG%3A4326&styles&format=image%2Fgeotiff8&width=6144&height=2640");
+        URL url = new URL("https://api.naonair.org/geoserver/aireel/wms?service=WMS&version=1.1.0&request=GetMap&layers=aireel%3Aaireel_indic_7m_NO2_deg&bbox=-1.9272281569407010,47.0913666061233300,-1.3443056421867574,47.3612095285679118&srs=EPSG%3A4326&styles&format=image%2Fgeotiff8&width=6144&height=2640");
         //URL url = new URL("https://data.airpl.org/geoserver/aireel/wms?service=WMS&version=1.1.0&request=GetMap&layers=aireel%3Aaireel_indic_7m_atmo_deg&bbox=-1.9272281569407010,47.0913666061233300,-1.3443056421867574,47.3612095285679118&srs=EPSG%3A4326&styles&format=image%2Fgeotiff&width=6144&height=2640");
         InputStream in = url.openStream();
 
