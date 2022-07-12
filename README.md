@@ -1,8 +1,51 @@
 # GraphHopper Routing Engine
 
-[![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
-
 GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0. It can be used as a Java library or standalone web server to calculate the distance, time, turn-by-turn instructions and many road attributes for a route between two or more points. Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching), [Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and [more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it can import [other data sources too](README.md#OpenStreetMap-Support).
+
+# Improved version By Lonestone 
+
+This Graphhopper fork was improved to integrate cleanest path (extension of fastest path)
+
+## Local development
+
+Dependencies installation
+```
+cd graphhopper
+mvn clean install -DskipTests
+```
+
+Download some road data, and save it at root
+```
+curl http://download.geofabrik.de/europe/france/pays-de-la-loire-latest.osm.pbf -o pays-de-la-loire-latest.osm.pbf
+```
+
+IntelliJ config (recommanded) :
+
+```
+Main class: com.graphhopper.application.GraphHopperApplication
+VM options: -Xms1g -Xmx1g -server -Ddw.graphhopper.datareader.file=pays-de-la-loire-latest.osm.pbf -Ddw.graphhopper.graph.location=./pays-de-la-loire-latest.osm-gh
+Program arguments: server config-example.yml
+Shorten command line : JAR manifest
+```
+
+Rebuild project, run, and play !
+
+### Launch with docker
+
+```
+docker build . -t graphhopper
+docker run -d --name graphhopper -v C:/D/Volumes/Graphhopper:/data -p 8989:8989 graphhopper
+```
+
+Just in case, launch cmd : 
+```
+# automatically download osm data
+./graphhopper.sh web pays-de-la-loire.pbf
+
+
+# OR load local file
+./graphhopper.sh web ./pays-de-la-loire-latest.osm.pbf
+```
 
 # Community
 
