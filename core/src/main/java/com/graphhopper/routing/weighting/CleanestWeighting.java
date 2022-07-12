@@ -47,8 +47,7 @@ public class CleanestWeighting extends PriorityWeighting {
             double airQA = ReadGeotiff.getValue(pt.lon, pt.lat);
             double distance = edgeState.getDistance();
 
-            // attention : si le chiffre est trop élevé l'impact des pistes sera diminué
-            return baseWeight * (calcCoef(airQA) * distance);
+            return baseWeight + calcCoef(airQA);
         } catch (Exception e) {
             logger.error(e.getMessage());
             // if an error occurred, we return the weight from inherited class
@@ -63,10 +62,7 @@ public class CleanestWeighting extends PriorityWeighting {
 
     // airQA is na integer in interval [0;90], so we return a coef in interval ]0;edgePenaltyFactor]
     private double calcCoef(double airQA) {
-        if (airQA == 0) airQA = 1;
-
-        double airQA100 = airQA / 90 * 100;
-        return airQA100;
+        return ((200-1)/(90-0)) * airQA + 1;
     }
 
 }
