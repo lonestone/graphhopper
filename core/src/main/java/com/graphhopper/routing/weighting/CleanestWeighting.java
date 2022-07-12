@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting;
 
+import com.ctc.wstx.io.SystemId;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.custom.ReadGeotiff;
 import com.graphhopper.util.EdgeIteratorState;
@@ -20,36 +21,38 @@ import org.slf4j.LoggerFactory;
  * @author J.Brun - Lonestone
  */
 public class CleanestWeighting extends PriorityWeighting {
-    private PriorityWeighting pw;
-
     private final static Logger logger = LoggerFactory.getLogger(CleanestWeighting.class);
+    private final static int edgePenaltyFactor = 1000;
 
     public CleanestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
         super(encoder, map, turnCostProvider);
 
         ReadGeotiff.startTimer();
-        pw = new PriorityWeighting(encoder, map, turnCostProvider);
     }
 
     @Override
     public double getMinWeight(double distance) {
-        return 0;
+        return 1;
     }
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        double priorityWeight = pw.calcEdgeWeight(edgeState,reverse);
+        // use inherited class to calc base edge weight
+        double baseWeight = super.calcEdgeWeight(edgeState,reverse);
         PointList ptList = edgeState.fetchWayGeometry(FetchMode.BASE_AND_PILLAR);
 
         try {
-            // it's useless to take all points, because they are too close
+            // it's useless to take all points to compute an avg/mode, because they are too close
             GHPoint3D pt = ptList.get(0);
             double airQA = ReadGeotiff.getValue(pt.lon, pt.lat);
-            return priorityWeight * calcCoef(airQA);
+            double distance = edgeState.getDistance();
+
+            // attention : si le chiffre est trop élevé l'impact des pistes sera diminué
+            return baseWeight * (calcCoef(airQA) * distance);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            // if an error occurred, we return the weight from priorityWeight
-            return priorityWeight;
+            // if an error occurred, we return the weight from inherited class
+            return baseWeight;
         }
     }
 
@@ -58,9 +61,12 @@ public class CleanestWeighting extends PriorityWeighting {
         return "cleanest";
     }
 
+    // airQA is na integer in interval [0;90], so we return a coef in interval ]0;edgePenaltyFactor]
     private double calcCoef(double airQA) {
-        if (airQA == 0) return 1;
-        return airQA * airQA * airQA ;
+        if (airQA == 0) airQA = 1;
+
+        double airQA100 = airQA / 90 * 100;
+        return airQA100;
     }
 
 }

@@ -48,6 +48,7 @@ import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
@@ -274,26 +275,43 @@ public class Router {
         ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
-        double QAsum = 0;
-        List<Double> QAs = new ArrayList<Double>();
-        for (int i = 0; i < responsePath.getPoints().size(); i++ )
+
+        // NOTE : Suffix _90 si to inform about interval (_90 => value between [0;90])
+        List<Double> qaList = new ArrayList<Double>();
+        List<Double> qaList_90 = new ArrayList<Double>();
+
+        double qaSum_90 = 0;
+
+        for (int i = 0; i < responsePath.getInstructions().size(); i++ )
         {
-            double lat = responsePath.getPoints().get(i).getLat();
-            double lon = responsePath.getPoints().get(i).getLon();
+            Instruction instruction = responsePath.getInstructions().get(i);
+            GHPoint3D firstPoint = instruction.getPoints().get(0);
+            double lat =firstPoint.getLat();
+            double lon = firstPoint.getLon();
+            double distance = instruction.getDistance();
             double qa = 0;
             try {
                 qa = ReadGeotiff.getValue( lon, lat);
-                QAs.add((double) Math.round(qa / 15));
-                QAsum += qa;
+                qaList.add((double) Math.round(qa / 15));
+                qaList_90.add(qa);
+
+                qaSum_90 += qa*distance;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        double qa_cumulated_90 = Math.round(qaSum_90);
+        double qa_avg_90 = Math.round(qaSum_90 / responsePath.getDistance() * 100) / 100;
 
-        // return most frequent value
-        ghRsp.getHints().putObject("qa", QAs.stream().reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(QAs, o1) -
-                Collections.frequency(QAs, o2))).orElse(null));
-        ghRsp.getHints().putObject("qa_cumulated", Math.round(QAsum) );
+        // return most frequent value (mod)
+        ghRsp.getHints().putObject("qa", qaList.stream().reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(qaList, o1) -
+                Collections.frequency(qaList, o2))).orElse(null));
+
+        ghRsp.getHints().putObject("qa_mode_90", qaList_90.stream().reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(qaList_90, o1) -
+                Collections.frequency(qaList_90, o2))).orElse(null));
+        ghRsp.getHints().putObject("qa_cumulated_90",  qa_cumulated_90);
+        ghRsp.getHints().putObject("qa_avg_90",qa_avg_90 );
+
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;
