@@ -84,7 +84,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
             weighting = new ShortestWeighting(encoder, turnCostProvider);
         }  else if ("cleanest".equalsIgnoreCase(weightingStr)) {
             weighting = new CleanestWeighting(encoder, hints, turnCostProvider);
-        } else if ("fastest".equalsIgnoreCase(weightingStr)) {
+        }  else if ("priority".equalsIgnoreCase(weightingStr)) {
+            weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
+        }
+         else if ("fastest".equalsIgnoreCase(weightingStr)) {
             if (encoder.supports(PriorityWeighting.class))
                 weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
             else
